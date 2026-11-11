@@ -4,7 +4,7 @@
 <img width="1341" height="1111" alt="1" src="https://github.com/user-attachments/assets/02def113-ff73-4890-a156-d6f629e1d178" />
 
 # Задача 2
-Создал файл **count-vm.tf** и описал в нём 2 ВМ через **count**. Создал необходимые переменные в **variables.tf**. Описал в **main.tf** конфиг ВМ из первого задания и импортировал её в **tfstate** командой ```terraform import yandex_compute_instance.first_vm fv4d04vhidovcinjk6cg```. В блоке **network_interface** ВМ из первого задания добавил ```security_group_ids = [yandex_vpc_security_group.example.id]``` для того, чтобы она получила уже созданную группу безопасности.
+1. Создал файл **count-vm.tf** и описал в нём 2 ВМ через **count**. Создал необходимые переменные в **variables.tf**. Описал в **main.tf** конфиг ВМ из первого задания и импортировал её в **tfstate** командой ```terraform import yandex_compute_instance.first_vm fv4d04vhidovcinjk6cg```. В блоке **network_interface** ВМ из первого задания добавил ```security_group_ids = [yandex_vpc_security_group.example.id]``` для того, чтобы она получила уже созданную группу безопасности.
 Листинг изменений/добавлений
 main.tf:
 ```
@@ -18,7 +18,7 @@ resource "yandex_compute_instance" "first_vm" {
   }
   boot_disk {
     initialize_params {
-      image_id = data.yandex_compute_image.first_vm.image_id
+      image_id = data.yandex_compute_image.ubuntu.image_id
     }
   }
   scheduling_policy {
@@ -39,10 +39,6 @@ resource "yandex_compute_instance" "first_vm" {
 
 count-vm.tf:
 ```
-data "yandex_compute_image" "web" {
-  family = var.vm_image_family.web
-}
-
 resource "yandex_compute_instance" "web" {
   count = 2
 
@@ -55,7 +51,7 @@ resource "yandex_compute_instance" "web" {
   }
   boot_disk {
     initialize_params {
-      image_id = data.yandex_compute_image.web.image_id
+      image_id = data.yandex_compute_image.ubuntu.image_id
     }
   }
   scheduling_policy {
@@ -76,11 +72,8 @@ resource "yandex_compute_instance" "web" {
 variables.tf:
 ```
 variable "vm_image_family" {
-  type        = map(string)
-  default     = {
-    web = "ubuntu-2004-lts"
-    first_vm = "ubuntu-2004-lts"
-  }
+  type        = string
+  default     = "ubuntu-2004-lts"
 }
 
 variable "vm_name" {
@@ -149,3 +142,123 @@ variable "vm_instance_metadata" {
   }
 }
 ```
+
+2. В файле **variable.tf** была создана переменная **each_vm** со следующим листингом:
+```
+variable "each_vm" {
+  type = list(object({
+    platform_id   = string,
+    vm_name       = string,
+    cores         = number,
+    memory        = number,
+    core_fraction = number,
+    disk_size     = number,
+    preemptible   = bool,
+  }))
+
+  default = [
+    {
+      vm_name       = "main"
+      platform_id   = "standard-v3"
+      cores         = 2
+      memory        = 1
+      core_fraction = 20
+      disk_size     = 10
+      preemptible   = true
+    },
+    {
+      vm_name       = "replica"
+      platform_id   = "standard-v3"
+      cores         = 4
+      memory        = 2
+      core_fraction = 20
+      disk_size     = 11
+      preemptible   = true
+    }
+  ]
+}
+```
+Для удобства были изменены названия переменных, указанные в задании, а именно **cpu -> cores**; **ram -> memory**; **disk_volume -> disk_size**, а также добавлены новые. Также создан файл foe_each-vm.tf со следующим листингом:
+```
+resource "yandex_compute_instance" "for_each_vm" {
+  for_each = { for vm in var.each_vm : vm.vm_name => vm }
+
+  name = each.key
+  platform_id = each.value.platform_id
+
+  resources {
+    cores         = each.value.cores
+    memory        = each.value.memory
+    core_fraction = each.value.core_fraction
+  }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.image_id
+      size = each.value.disk_size
+    }
+  }
+  scheduling_policy {
+    preemptible = each.value.preemptible
+  }
+  network_interface {
+    subnet_id = yandex_vpc_subnet.develop.id
+    nat       = var.vm_instance_network_interface_nat.first_vm
+    security_group_ids = [yandex_vpc_security_group.example.id]
+  }
+
+  metadata = {
+    serial-port-enable = lookup(var.vm_instance_metadata.common, "serial-port-enable")
+    ssh-keys           = "${lookup(var.vm_instance_metadata.common, "ssh-user")}:${lookup(var.vm_instance_metadata.common, "ssh-key")}"
+  }
+}
+```
+3. Порядок создания ресурсов был определён через **depends_on** строкой ```depends_on = [yandex_compute_instance.for_each_vm]```
+4. Был добавлен для удобства отдельный файл **locals** со следующим листингом:
+```
+locals {
+  ssh-pub-key = file(pathexpand("~/.ssh/id_ed25519.pub"))
+}
+```
+в Файле **for_each-vm.tf** в блоке **metadata** была изменена строка **ssh-keys** на ```ssh-keys           = "${lookup(var.vm_instance_metadata.common, "ssh-user")}:${local.ssh-pub-key}"```
+Выполнил ```terraform plan``` и ```terraform apply```, необходимые ВМ создались
+<img width="1846" height="454" alt="3" src="https://github.com/user-attachments/assets/89ae6cef-9b25-4475-a10a-457dfcfb9e53" />
+
+# Задача 3
+1. Создал файл **disk_vm.tf** со следующим содержимым
+```
+resource "yandex_compute_disk" "disk" {
+  count = 3
+
+  name = "${var.disks.name}-${count.index}"
+  size = var.disks.size
+  type = var.disks.type
+}
+```
+Также добавил в **variables.tf** переменную
+```
+variable "disks" {
+  type = object({
+    type = string,
+    size = number,
+    name = string
+  })
+
+  default = {
+    type = "network-hdd"
+    size = 1
+    name = "disk"
+  }
+}
+```
+Применил изменения -> диски создались
+2. Был добавлен динамический блок
+```
+dynamic "secondary_disk" {
+  for_each = yandex_compute_disk.disk
+
+  content {
+    disk_id = secondary_disk.value.id
+  }
+}
+```
+И применены изменения
