@@ -298,3 +298,24 @@ ${vm.name}   ansible_host=%{if length(vm.network_interface[0].nat_ip_address) > 
 %{endfor}
 %{endif}
 ```
+# Задача 5
+Создаём файл **output.tf** со следующим кодом
+```
+output "vm_list" {
+  value = concat(
+    [for vm in yandex_compute_instance.web : {
+      name        = vm.name
+      fqdn        = vm.fqdn
+      id          = vm.id
+    }],
+
+    [for vm in values(yandex_compute_instance.for_each_vm) : {
+      name        = vm.name
+      fqdn        = vm.fqdn
+      id          = vm.id
+    }]
+  )
+}
+```
+Используем функцию **concat** т.к. нужно объединить несколько разных ресурсов в один список
+Далее во втором блоке ```[for vm in values(yandex_compute_instance.for_each_vm)
