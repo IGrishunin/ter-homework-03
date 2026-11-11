@@ -318,4 +318,6 @@ output "vm_list" {
 }
 ```
 Используем функцию **concat** т.к. нужно объединить несколько разных ресурсов в один список
-Далее во втором блоке ```[for vm in values(yandex_compute_instance.for_each_vm)
+Далее во втором блоке ```[for vm in values(yandex_compute_instance.for_each_vm)``` используем функцию **values**, чтобы преобразовать map в список
+
+
