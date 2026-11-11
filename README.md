@@ -262,3 +262,39 @@ dynamic "secondary_disk" {
 }
 ```
 И применены изменения
+
+# Задача 4
+Создал файл **ansible.tf**
+```
+resource "local_file" "hosts_templatefile" {
+  content = templatefile("${path.module}/hosts.tftpl",
+  {
+    webservers = yandex_compute_instance.web,
+    databases  = values(yandex_compute_instance.for_each_vm),
+    storages   = [yandex_compute_instance.storage]
+  })
+
+  filename = "${abspath(path.module)}/hosts.ini"
+}
+```
+Также создал шаблон **hosts.tftpl**
+```
+%{if length(webservers) > 0 ~}
+[webservers]
+%{for vm in webservers ~}
+${vm.name}   ansible_host=%{if length(vm.network_interface[0].nat_ip_address) > 0}${vm["network_interface"][0]["nat_ip_address"]}%{else}${vm.network_interface[0].ip_address}%{end>
+%{endfor}
+%{endif}
+%{if length(databases) > 0 ~}
+[databases]
+%{for vm in databases ~}
+${vm.name}   ansible_host=%{if length(vm.network_interface[0].nat_ip_address) > 0}${vm["network_interface"][0]["nat_ip_address"]}%{else}${vm.network_interface[0].ip_address}%{end>
+%{endfor}
+%{endif}
+%{if length(storages) > 0 ~}
+[storages]
+%{for vm in storages ~}
+${vm.name}   ansible_host=%{if length(vm.network_interface[0].nat_ip_address) > 0}${vm["network_interface"][0]["nat_ip_address"]}%{else}${vm.network_interface[0].ip_address}%{end>
+%{endfor}
+%{endif}
+```
