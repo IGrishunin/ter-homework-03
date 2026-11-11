@@ -36,6 +36,6 @@ resource "yandex_compute_instance" "storage" {
 
   metadata = {
     serial-port-enable = lookup(var.vm_instance_metadata.common, "serial-port-enable")
-    ssh-keys           = "${lookup(var.vm_instance_metadata.common, "ssh-user")}:${lookup(var.vm_instance_metadata.common, "ssh-key")}"
+    ssh-keys           = "${lookup(var.vm_instance_metadata.common, "ssh-user")}:${local.ssh-pub-key}"
   }
 }

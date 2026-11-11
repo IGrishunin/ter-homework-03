@@ -1,9 +1,3 @@
-###cloud var
-#variable "token" {
-#  type        = string
-#  description = "OAuth-token; https://cloud.yandex.ru/docs/iam/concepts/authorization/oauth-token"
-#}
-
 variable "cloud_id" {
   type        = string
   description = "https://cloud.yandex.ru/docs/resource-manager/operations/cloud/get-id"
@@ -156,4 +150,14 @@ variable "disks" {
     size = 1
     name = "disk"
   }
+}
+
+variable "web_provision" {
+  type        = bool
+  default     = true
+  description = "ansible provision switch variable"
+}
+
+variable "ssh_private_key_path" {
+  type = string
 }

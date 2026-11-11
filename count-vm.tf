@@ -23,7 +23,7 @@ resource "yandex_compute_instance" "web" {
 
   metadata = {
     serial-port-enable = lookup(var.vm_instance_metadata.common, "serial-port-enable")
-    ssh-keys           = "${lookup(var.vm_instance_metadata.common, "ssh-user")}:${lookup(var.vm_instance_metadata.common, "ssh-key")}"
+    ssh-keys           = "${lookup(var.vm_instance_metadata.common, "ssh-user")}:${local.ssh-pub-key}"
   }
 
   depends_on = [yandex_compute_instance.for_each_vm]

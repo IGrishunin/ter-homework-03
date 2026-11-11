@@ -321,4 +321,22 @@ output "vm_list" {
 Далее во втором блоке ```[for vm in values(yandex_compute_instance.for_each_vm)``` используем функцию **values**, чтобы преобразовать map в список
 <img width="811" height="500" alt="4" src="https://github.com/user-attachments/assets/18c2e864-ece5-459a-b5e4-bd08ed370470" />
 
+# Промежуток
+Решил вынести значение переменных из **default** в файл **personal.auto.tfvars**
 
+# Задача 6
+1.В репозиторий приложен файл **ansible_playbook.tf**. Также добавлены новые переменные в **variables.tf**. И добавлен **playbook.yml**. Плейбук взят из демо репозитория, но в нём изменён параметр ```hosts: webservers``` на ```hosts: all```, а также раскомментирован блок с установкой **nginx** и **jq**.
+2.Подобная проверка уже добавлена и описана в **Задаче 4**
+
+# Задача 7
+Следующий код позволяет убрать третье значение из каждого списка и получить результат в необходимом формате
+```
+> {
+:   network_id   = local.vpc.network_id
+:   subnet_ids   = concat(slice(local.vpc.subnet_ids, 0, 2), slice(local.vpc.subnet_ids, 3, length(local.vpc.subnet_ids)))
+:   subnet_zones = concat(slice(local.vpc.subnet_zones, 0, 2), slice(local.vpc.subnet_zones, 3, length(local.vpc.subnet_zones)))
+: }
+```
+
+# Задача 8
+В ключе ```["platform_id "]``` Пробел в конце не допускается
