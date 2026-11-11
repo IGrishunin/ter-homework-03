@@ -178,7 +178,7 @@ variable "each_vm" {
   ]
 }
 ```
-Для удобства были изменены названия переменных, указанные в задании, а именно **cpu -> cores**; **ram -> memory**; **disk_volume -> disk_size**, а также добавлены новые. Также создан файл foe_each-vm.tf со следующим листингом:
+Для удобства были изменены названия переменных, указанные в задании, а именно **cpu -> cores**; **ram -> memory**; **disk_volume -> disk_size**, а также добавлены новые. Также создан файл **for_each-vm.tf** со следующим листингом:
 ```
 resource "yandex_compute_instance" "for_each_vm" {
   for_each = { for vm in var.each_vm : vm.vm_name => vm }
@@ -213,7 +213,7 @@ resource "yandex_compute_instance" "for_each_vm" {
 }
 ```
 3. Порядок создания ресурсов был определён через **depends_on** строкой ```depends_on = [yandex_compute_instance.for_each_vm]```
-4. Был добавлен для удобства отдельный файл **locals** со следующим листингом:
+4. Был добавлен для удобства отдельный файл **locals.tf** со следующим листингом:
 ```
 locals {
   ssh-pub-key = file(pathexpand("~/.ssh/id_ed25519.pub"))
