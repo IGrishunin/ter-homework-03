@@ -1,7 +1,7 @@
 resource "yandex_compute_instance" "web" {
   count = 2
 
-  name        = "web-${count.index}"
+  name        = "web-${count.index + 1}"
   platform_id = var.vm_instance_platform_id.web
   resources {
     cores         = lookup(var.vm_instance_resources.web, "cores")
@@ -19,6 +19,7 @@ resource "yandex_compute_instance" "web" {
   network_interface {
     subnet_id = yandex_vpc_subnet.develop.id
     nat       = var.vm_instance_network_interface_nat.web
+    security_group_ids = [yandex_vpc_security_group.example.id]
   }
 
   metadata = {

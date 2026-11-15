@@ -21,7 +21,6 @@ resource "yandex_compute_instance" "for_each_vm" {
   network_interface {
     subnet_id = yandex_vpc_subnet.develop.id
     nat       = var.vm_instance_network_interface_nat.first_vm
-    security_group_ids = [yandex_vpc_security_group.example.id]
   }
 
   metadata = {
